@@ -1,38 +1,28 @@
-require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const Product = require("./models/Products");
+const cors = require("cors");
+require("dotenv").config();
+
+const registerRoutes = require("./src/routes/authRoutes");
+
 const app = express();
-const productRoutes = require('./src/routes/productRoutes');
-app.use('/api/products',productRoutes);
+
+// Middlewares
+app.use(cors());
 app.use(express.json());
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Connected to MongoDB Atlas"))
-  .catch((err) => console.error("❌ MongoDB error:", err));
+// Routes
+app.use("/api/register", registerRoutes);
 
-///Routes
-//get ทดสอบ
+// Healthcheck
 app.get("/", (req, res) => res.send("Hello MongoDB!"));
 
-//post
-app.post("/api/products", async (req, res) => {
-  try {
-    const { name, price } = req.body;
-    const product = new Product({ name, price });
-    await product.save();
-    res.status(201).json(product);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
+// Connect MongoDB
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("Connected to MongoDB Atlas"))
+  .catch((err) => console.error(" MongoDB error:", err));
 
-//get products
-app.get("/api/products",async (req,res)=>{
-  const allProducts = await Product.find();
-    res.json(allProducts);
-});
-
+// Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(` Server running on port ${PORT}`));
