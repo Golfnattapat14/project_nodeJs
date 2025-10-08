@@ -1,0 +1,32 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables (ข้อมูลลับ เช่น Password / API Key)
+.env
+.env.local
+.env.development
+.env.production
+
+# Logs
+logs
+*.log
+logs/*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Build outputs (กรณีใช้ React หรือ TypeScript)
+dist/
+build/
+
+# Temporary files
+.tmp/
+.cache/
+
+# Editor / IDE settings
+.vscode/
+.idea/
