@@ -3,7 +3,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const Product = require("./models/Products");
 const app = express();
-
+const productRoutes = require('./src/routes/productRoutes');
+app.use('/api/products',productRoutes);
 app.use(express.json());
 
 mongoose
