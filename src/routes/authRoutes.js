@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Register = require("../models/auth");
+const { default: mongoose } = require("mongoose");
 
 // GET all
 router.get("/", async (req, res) => {
@@ -15,11 +16,19 @@ router.get("/", async (req, res) => {
 //GET :Id
 router.get("/:id", async (req, res) => {
   try {
-    const all = await Register.find();
-    if (!doc) return res.status(404).json({ message: "Not found" });
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id))
+      return res.status(404).json({ message: "Invalid ID format" });
+
+    const doc = await Register.findById(id);
+    if (!doc) {
+      return res.status(404).json({ message: "Not found!" });
+    }
     res.json(doc);
   } catch (err) {
-    res.status(400).json({ message: "Cant Pull By Id" });
+    console.error("GET /:id error:", err.message);
+    res.status(500).json({ message: "Sever Error" });
   }
 });
 
@@ -38,39 +47,70 @@ router.post("/", async (req, res) => {
 });
 
 //PUT register :Id
-router.put("/", async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
-    const { name, phoneNumber } = req.body;
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid ID format" });
+    }
+
+    const { name, phoneNumber } = req.body || {};
+    if (!name || !phoneNumber) {
+      return res
+        .status(400)
+        .json({ message: "name & phoneNumber are required for PUT" });
+    }
 
     const update = await Register.findByIdAndUpdate(
-      req.params.id,
+      id,
       { name, phoneNumber },
       { new: true, runValidators: true }
     );
 
-    if (!update) return res.status(404).json({ message: "Not Found!" });
-    res.json(update);
+    if (!update) {
+      return res.status(404).json({ message: "Not Found!" });
+    }
+
+    return res.json(update);
   } catch (err) {
-    res.status(400).json({ message: err.message || "Invalid ID or req" });
+    console.error("PUT /:id error:", err);
+    return res.status(500).json({ message: err.message || "Server error" });
   }
 });
 
-//PUT PATCH :Id
+// PATCH :Id
 router.patch("/:id", async (req, res) => {
   try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid ID format" });
+    }
+
     const allowed = ["name", "phoneNumber"];
     const patch = {};
+
     for (const key of Object.keys(req.body || {})) {
-      if (!allowed.includes(key)) patch[key] = req.body[key];
+      const val = req.body[key];
+      if (allowed.includes(key)) {
+        patch[key] = req.body[key];
+      }
     }
-    const update = await Register.findByIdAndUpdate(req.params.id, patch, {
+    if (Object.keys(patch).length === 0) {
+      return res.status(400).json({ message: "No allowed fields to update" });
+    }
+
+    const update = await Register.findByIdAndUpdate(id, patch, {
       new: true,
       runValidators: true,
     });
 
-    if (!update) return res.status(404).json({ message: "Not Found!" });
+    if (!update) {
+      return res.status(404).json({ message: "Not Found!" });
+    }
+    return res.json(update);
   } catch (err) {
-    res.status(400).json({ message: err.message || "Invalid ID or req" });
+    console.err("/PATCH /:id error:", err);
+    res.status(500).json({ message: err.message || "Sever Error" });
   }
 });
 
